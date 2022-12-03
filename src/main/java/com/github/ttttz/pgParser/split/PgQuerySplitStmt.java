@@ -1,4 +1,4 @@
-package org.ttttz.pgParser;
+package com.github.ttttz.pgParser.split;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;

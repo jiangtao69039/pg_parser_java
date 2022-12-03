@@ -2,21 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.0.0</version>
-        <relativePath/> <!-- lookup parent from repository -->
-    </parent>
-    <groupId>org.ttttz</groupId>
-    <artifactId>pg_parser_java</artifactId>
+    <groupId>com.github.ttttz</groupId>
+    <artifactId>pg-parser-java</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>pgParser</name>
-    <description>Demo project for use postgresql parser in java</description>
+    <name>pgParserJava</name>
+    <description>Project for use postgresql parser in java</description>
     <properties>
         <java.version>8</java.version>
         <libpg_query.github.url>https://github.com/pganalyze/libpg_query</libpg_query.github.url>
         <libpg_query.version>13-2.1.2</libpg_query.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <dependencies>
         <dependency>

@@ -1,4 +1,6 @@
-package org.ttttz.pgParser;
+package com.github.ttttz.pgParser;
+import com.github.ttttz.pgParser.split.PgQuerySplitResult;
+import com.github.ttttz.pgParser.split.PgQuerySplitStmt;
 import com.sun.jna.ptr.PointerByReference;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;

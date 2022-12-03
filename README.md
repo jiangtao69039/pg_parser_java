@@ -2,7 +2,7 @@
 
 Java library for accessing the PostgreSQL parser outside of the server.
 
-This library use the base library [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query)  
+This library uses the base library [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query)  
 
 ## Required tools before install
  * wget
@@ -39,6 +39,8 @@ mvn test
 
 ## Usage: Split multiple sql statements
 ```java
+import com.github.ttttz.pgParser.split.PgQuerySplitResult;
+import com.github.ttttz.pgParser.split.PgQuerySplitStmt;
 import com.sun.jna.ptr.PointerByReference;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -67,3 +69,11 @@ public class PgLibTest {
 }
 
 ```
+
+## Authors
+ - [jiangtao69039](https://github.com/jiangtao69039)
+
+## Change log
+ * add support of pg_query_split_with_parser
+ * add support of pg_query_split_with_scanner
+ * add support of pg_query_free_split_result

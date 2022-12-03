@@ -1,4 +1,4 @@
-package org.ttttz.pgParser;
+package com.github.ttttz.pgParser;
 
 import com.sun.jna.Structure;
 

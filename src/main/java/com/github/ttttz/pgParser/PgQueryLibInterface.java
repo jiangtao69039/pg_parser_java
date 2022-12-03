@@ -1,8 +1,8 @@
-package org.ttttz.pgParser;
+package com.github.ttttz.pgParser;
 
+import com.github.ttttz.pgParser.split.PgQuerySplitResult;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.NativeLong;
 
 import java.util.Objects;
 
