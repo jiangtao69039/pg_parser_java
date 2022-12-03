@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.ttttz</groupId>
-    <artifactId>pgParser</artifactId>
+    <artifactId>pg_parser_java</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>pgParser</name>
     <description>Demo project for use postgresql parser in java</description>
