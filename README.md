@@ -1,4 +1,44 @@
-package org.ttttz.pgParser;
+# pg_parser_java
+
+Java library for accessing the PostgreSQL parser outside of the server.
+
+This library use the base library [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query)  
+
+## Required tools before install
+ * wget
+ * make
+ * gcc
+ * maven
+ * java 8+
+ 
+**This was built under the following conditions.**
+1. open jdk 8u302
+2. GNU Make 4.3
+3. gcc 12.2.0
+4. maven 3.8.6
+5. OS: arch linux x86_64
+
+**In addition**: It's works fine on openjdk-8-slim-buster docker image. But you must build the libpg_query.so in the image to avoid GBLIC version differences.
+
+  
+This was tested almost not at all. Good luck!
+
+## Installation
+```shell
+mvn clean package -Pdownload -PbuildLib
+```
+
+-Pdownload: download [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query) source code into target/downloads/
+-PbuildLib: generate libpg_query.so into src/main/resource/libpg_query.so  
+  
+
+## Test
+```shell
+mvn test 
+```
+
+## Usage: Split multiple sql statements
+```java
 import com.sun.jna.ptr.PointerByReference;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,3 +65,5 @@ public class PgLibTest {
                 .INSTANCE.pg_query_free_split_result(byValue);
     }
 }
+
+```
