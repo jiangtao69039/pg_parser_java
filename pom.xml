@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.0.0</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>org.ttttz</groupId>
+    <artifactId>pgParser</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>pgParser</name>
+    <description>Demo project for use postgresql parser in java</description>
+    <properties>
+        <java.version>8</java.version>
+        <libpg_query.github.url>https://github.com/pganalyze/libpg_query</libpg_query.github.url>
+        <libpg_query.version>13-2.1.2</libpg_query.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.9.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.12.1</version>
+        </dependency>
+    </dependencies>
+    <profiles>
+        <profile>
+            <id>download</id>
+            <properties>
+                <profileActive>download</profileActive>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.googlecode.maven-download-plugin</groupId>
+                        <artifactId>download-maven-plugin</artifactId>
+                        <version>1.6.8</version>
+                        <executions>
+                            <execution>
+                                <phase>initialize</phase>
+                                <goals>
+                                    <goal>wget</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <url>${libpg_query.github.url}/archive/refs/tags/${libpg_query.version}.zip</url>
+                            <unpack>true</unpack>
+                            <outputDirectory>${project.build.directory}/downloads</outputDirectory>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>buildLib</id>
+            <properties>
+                <profileActive>buildLib</profileActive>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>make-libpq_query</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>
+                                        ${project.build.directory}/downloads/libpg_query-${libpg_query.version}
+                                    </workingDirectory>
+                                    <executable>make</executable>
+                                    <environmentVariables>
+                                        <CFLAGS>-I${java.home}/include/ -I${java.home}/include/linux/</CFLAGS>
+                                    </environmentVariables>
+                                    <arguments>
+                                        <argument>build_shared</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+
+    <build>
+        <plugins>
+            <!--<plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.0.0-M7</version>
+                <configuration>
+                    <argLine>-Djava.library.path=${project.build.directory}/downloads/libpg_query-${libpg_query.version} -Djna.debug_load=true</argLine>
+                </configuration>
+            </plugin>-->
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id> <!-- here the phase you need -->
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/src/main/resources/</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/target/downloads/libpg_query-${libpg_query.version}/</directory>
+                                    <include>*.so</include>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${project.build.directory}/generated-sources"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>target/generated-sources</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
