@@ -74,6 +74,6 @@ public class PgLibTest {
  - [jiangtao69039](https://github.com/jiangtao69039)
 
 ## Change log
- * add support of pg_query_split_with_parser
- * add support of pg_query_split_with_scanner
- * add support of pg_query_free_split_result
+ * 2022-12-02: add support of pg_query_split_with_parser
+ * 2022-12-02: add support of pg_query_split_with_scanner
+ * 2022-12-02: add support of pg_query_free_split_result
