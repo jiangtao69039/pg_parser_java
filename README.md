@@ -28,7 +28,7 @@ This was tested almost not at all. Good luck!
 mvn clean package -Pdownload -PbuildLib
 ```
 
--Pdownload: download [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query) source code into target/downloads/
+-Pdownload: download [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query) source code into target/downloads/   
 -PbuildLib: generate libpg_query.so into src/main/resource/libpg_query.so  
   
 
