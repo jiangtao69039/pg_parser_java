@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 /src/main/resources/libpg_query.so
+/src/test/resources/libpg_query.so

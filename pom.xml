@@ -78,7 +78,7 @@
                         <executions>
                             <execution>
                                 <id>make-libpq_query</id>
-                                <phase>compile</phase>
+                                <phase>generate-sources</phase>
                                 <goals>
                                     <goal>exec</goal>
                                 </goals>
@@ -120,12 +120,29 @@
                 <executions>
                     <execution>
                         <id>copy-resources</id> <!-- here the phase you need -->
-                        <phase>package</phase>
+                        <phase>process-resources</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
                             <outputDirectory>${basedir}/src/main/resources/</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}/target/downloads/libpg_query-${libpg_query.version}/</directory>
+                                    <include>*.so</include>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+
+                    <execution>
+                        <id>copy-test-resources</id> <!-- here the phase you need -->
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/src/test/resources/</outputDirectory>
                             <resources>
                                 <resource>
                                     <directory>${basedir}/target/downloads/libpg_query-${libpg_query.version}/</directory>
@@ -147,6 +164,8 @@
                         <configuration>
                             <target>
                                 <mkdir dir="${project.build.directory}/generated-sources"/>
+                                <mkdir dir="${basedir}/src/main/resources"/>
+                                <mkdir dir="${basedir}/src/test/resources"/>
                             </target>
                         </configuration>
                         <goals>
