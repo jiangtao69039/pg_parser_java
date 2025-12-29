@@ -10,6 +10,7 @@ This library uses the base library [libpg_query](https://github.com/pganalyze/li
  * gcc
  * maven
  * java 8+
+ * protoc (sudo apt install protobuf-compiler)
  
 **This was built under the following conditions.**
 1. open jdk 8u302
