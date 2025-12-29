@@ -9,8 +9,8 @@
     <description>Project for use postgresql parser in java</description>
     <properties>
         <java.version>8</java.version>
-        <libpg_query.github.url>https://github.com/pganalyze/libpg_query</libpg_query.github.url>
-        <libpg_query.version>17-6.2.0</libpg_query.version>
+        <libpg_query.github.url>https://github.com/jiangtao69039/libpg_query</libpg_query.github.url>
+        <libpg_query.version>17-1229</libpg_query.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -26,6 +26,16 @@
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
             <version>5.12.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+            <version>3.21.12</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
+            <version>3.21.12</version>
         </dependency>
     </dependencies>
     <profiles>
@@ -101,6 +111,45 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <!-- Generate Java protobuf classes from pg_query.proto -->
+            <!-- Requires: proto file with JSON_VALUE_P and VALUES_P fixes -->
+            <!-- Usage: mvn generate-sources -PgenerateProtobuf -->
+            <id>generateProtobuf</id>
+            <properties>
+                <profileActive>generateProtobuf</profileActive>
+                <libpg_query.proto.path>${project.build.directory}/downloads/libpg_query-${libpg_query.version}/protobuf</libpg_query.proto.path>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>generate-protobuf</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>protoc</executable>
+                                    <arguments>
+                                        <argument>--java_out=${project.build.directory}/generated-sources/protobuf</argument>
+                                        <argument>-I${libpg_query.proto.path}</argument>
+                                        <argument>${libpg_query.proto.path}/pg_query.proto</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
 
@@ -164,6 +213,7 @@
                         <configuration>
                             <target>
                                 <mkdir dir="${project.build.directory}/generated-sources"/>
+                                <mkdir dir="${project.build.directory}/generated-sources/protobuf"/>
                                 <mkdir dir="${basedir}/src/main/resources"/>
                                 <mkdir dir="${basedir}/src/test/resources"/>
                             </target>
@@ -189,6 +239,7 @@
                         <configuration>
                             <sources>
                                 <source>target/generated-sources</source>
+                                <source>target/generated-sources/protobuf</source>
                             </sources>
                         </configuration>
                     </execution>

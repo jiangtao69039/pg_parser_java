@@ -1,6 +1,7 @@
 package com.github.ttttz.pgParser;
 
 import com.github.ttttz.pgParser.parse.PgQueryParseResult;
+import com.github.ttttz.pgParser.parse.PgQueryProtobufParseResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitStmt;
 import com.sun.jna.ptr.PointerByReference;
@@ -31,6 +32,30 @@ public class PgQuery {
             return result.parse_tree;
         } finally {
             PgQueryLibInterface.INSTANCE.pg_query_free_parse_result(result);
+        }
+    }
+
+    /**
+     * Parse SQL and return strongly-typed ParseResult object
+     *
+     * @param sql SQL statement
+     * @return ParseResult containing the AST as Java objects
+     * @throws PgQueryException if parsing fails
+     */
+    public static pg_query.PgQuery.ParseResult parseTree(String sql) throws PgQueryException {
+        PgQueryProtobufParseResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_parse_protobuf(sql);
+        try {
+            if (result.hasError()) {
+                throw new PgQueryException(result.error.message, result.error.cursorpos);
+            }
+
+            byte[] protobufBytes = result.getProtobufBytes();
+            return pg_query.PgQuery.ParseResult.parseFrom(protobufBytes);
+
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            throw new PgQueryException("Failed to parse protobuf: " + e.getMessage());
+        } finally {
+            PgQueryLibInterface.INSTANCE.pg_query_free_protobuf_parse_result(result);
         }
     }
 
