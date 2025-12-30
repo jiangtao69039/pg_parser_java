@@ -71,6 +71,7 @@
             </build>
         </profile>
         <profile>
+            <!-- Build locally (uses system glibc, may have compatibility issues) -->
             <id>buildLib</id>
             <properties>
                 <profileActive>buildLib</profileActive>
@@ -80,7 +81,6 @@
             </activation>
             <build>
                 <plugins>
-
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
@@ -107,7 +107,51 @@
                             </execution>
                         </executions>
                     </plugin>
-
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <!-- Build with Docker CentOS 7 for glibc compatibility -->
+            <!-- Usage: mvn generate-sources -Pdownload -PbuildLibDocker -->
+            <id>buildLibDocker</id>
+            <properties>
+                <profileActive>buildLibDocker</profileActive>
+                <docker.image>centos:7</docker.image>
+            </properties>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>docker-build-libpq_query</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>docker</executable>
+                                    <arguments>
+                                        <argument>run</argument>
+                                        <argument>--rm</argument>
+                                        <argument>-v</argument>
+                                        <argument>${project.build.directory}/downloads/libpg_query-${libpg_query.version}:/build</argument>
+                                        <argument>-w</argument>
+                                        <argument>/build</argument>
+                                        <argument>${docker.image}</argument>
+                                        <argument>sh</argument>
+                                        <argument>-c</argument>
+                                        <argument>sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; yum install -y gcc make &amp;&amp; make clean &amp;&amp; make build_shared &amp;&amp; chmod 644 libpg_query.so</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                 </plugins>
             </build>
         </profile>
