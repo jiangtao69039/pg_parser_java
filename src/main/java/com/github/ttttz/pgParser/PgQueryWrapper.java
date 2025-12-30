@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * High-level API for PostgreSQL SQL parsing
  */
-public class PgQuery {
+public class PgQueryWrapper {
 
     private static final int POINTER_SIZE = 8; // 64-bit
 

@@ -91,7 +91,7 @@ public class PgLibTest {
 
     @Test
     public void test_PgQuery_parse() throws PgQueryException {
-        String json = com.github.ttttz.pgParser.PgQuery.parse("SELECT * FROM users");
+        String json = PgQueryWrapper.parse("SELECT * FROM users");
 
         assertNotNull(json);
         assertTrue(json.contains("SelectStmt"));
@@ -102,14 +102,14 @@ public class PgLibTest {
     @Test
     public void test_PgQuery_parse_error() {
         PgQueryException exception = assertThrows(PgQueryException.class, () -> {
-            com.github.ttttz.pgParser.PgQuery.parse("SELECT * FROM");
+            PgQueryWrapper.parse("SELECT * FROM");
         });
         System.out.println("Exception: " + exception.getMessage());
     }
 
     @Test
     public void test_PgQuery_split() throws PgQueryException {
-        List<String> statements = com.github.ttttz.pgParser.PgQuery.split("SELECT 1; SELECT 2; SELECT 3;");
+        List<String> statements = PgQueryWrapper.split("SELECT 1; SELECT 2; SELECT 3;");
 
         assertEquals(3, statements.size());
         assertEquals("SELECT 1", statements.get(0));
@@ -121,7 +121,7 @@ public class PgLibTest {
 
     @Test
     public void test_parseTree_simple() throws PgQueryException {
-        ParseResult result = com.github.ttttz.pgParser.PgQuery.parseTree("SELECT 1");
+        ParseResult result = PgQueryWrapper.parseTree("SELECT 1");
 
         assertNotNull(result);
         assertEquals(1, result.getStmtsCount());
@@ -131,7 +131,7 @@ public class PgLibTest {
 
     @Test
     public void test_parseTree_select_from() throws PgQueryException {
-        ParseResult result = com.github.ttttz.pgParser.PgQuery.parseTree("SELECT * FROM users WHERE id = 1");
+        ParseResult result = PgQueryWrapper.parseTree("SELECT * FROM users WHERE id = 1");
 
         assertEquals(1, result.getStmtsCount());
 
@@ -156,7 +156,7 @@ public class PgLibTest {
 
     @Test
     public void test_parseTree_insert() throws PgQueryException {
-        ParseResult result = com.github.ttttz.pgParser.PgQuery.parseTree(
+        ParseResult result = PgQueryWrapper.parseTree(
                 "INSERT INTO orders (product, qty) VALUES ('apple', 10)"
         );
 
@@ -180,7 +180,7 @@ public class PgLibTest {
 
     @Test
     public void test_parseTree_multiple_tables() throws PgQueryException {
-        ParseResult result = com.github.ttttz.pgParser.PgQuery.parseTree(
+        ParseResult result = PgQueryWrapper.parseTree(
                 "SELECT * FROM users u JOIN orders o ON u.id = o.user_id"
         );
 
@@ -198,7 +198,7 @@ public class PgLibTest {
     @Test
     public void test_parseTree_error() {
         PgQueryException exception = assertThrows(PgQueryException.class, () -> {
-            com.github.ttttz.pgParser.PgQuery.parseTree("SELECT * FROM");
+            PgQueryWrapper.parseTree("SELECT * FROM");
         });
         System.out.println("Protobuf parse exception: " + exception.getMessage());
     }
