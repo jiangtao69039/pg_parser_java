@@ -49,7 +49,7 @@ mvn clean package -Pdownload -PbuildLib -DskipTests
 
 **Full build with Docker( for developer):**
 ```shell
-mvn clean package -Pdownload -PbuildLibDocker -PgenerateProtobuf
+mvn clean package -Pdownload -PbuildLibDocker -DskipTests
 ```  
   
 
