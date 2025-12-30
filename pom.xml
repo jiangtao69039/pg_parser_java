@@ -32,11 +32,6 @@
             <artifactId>protobuf-java</artifactId>
             <version>3.21.12</version>
         </dependency>
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java-util</artifactId>
-            <version>3.21.12</version>
-        </dependency>
     </dependencies>
     <profiles>
         <profile>
@@ -157,9 +152,8 @@
             </build>
         </profile>
         <profile>
-            <!-- Generate Java protobuf classes from pg_query.proto -->
-            <!-- Requires: proto file with JSON_VALUE_P and VALUES_P fixes -->
-            <!-- Usage: mvn generate-sources -PgenerateProtobuf -->
+            <!-- Generate Java protobuf classes from pg_query.proto and copy to src -->
+            <!-- Usage: mvn generate-sources -Pdownload -PgenerateProtobuf -->
             <id>generateProtobuf</id>
             <properties>
                 <profileActive>generateProtobuf</profileActive>
@@ -188,6 +182,31 @@
                                         <argument>-I${libpg_query.proto.path}</argument>
                                         <argument>${libpg_query.proto.path}/pg_query.proto</argument>
                                     </arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>copy-protobuf-to-src</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${basedir}/src/main/java</outputDirectory>
+                                    <overwrite>true</overwrite>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.build.directory}/generated-sources/protobuf</directory>
+                                            <includes>
+                                                <include>**/*.java</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
                                 </configuration>
                             </execution>
                         </executions>
@@ -284,7 +303,6 @@
                         <configuration>
                             <sources>
                                 <source>target/generated-sources</source>
-                                <source>target/generated-sources/protobuf</source>
                             </sources>
                         </configuration>
                     </execution>

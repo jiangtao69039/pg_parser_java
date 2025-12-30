@@ -12,7 +12,7 @@ This library uses the base library [libpg_query](https://github.com/pganalyze/li
 **For local build (without Docker):**
  * make
  * gcc
- * protoc (for regenerating protobuf classes,sudo apt install protobuf-compiler)
+ * protoc ( 3.21.12 for regenerating protobuf classes,sudo apt install protobuf-compiler, and protoc --version is same with protobuf-java in pom.xml)
 
 **For Docker build (recommended):**
  * docker
