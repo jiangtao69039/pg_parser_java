@@ -21,9 +21,10 @@ This library uses the base library [libpg_query](https://github.com/pganalyze/li
 
 ### Option 1: Build with Docker (Recommended)
 
-Uses CentOS 7 container for better glibc compatibility across different Linux distributions.
+Uses debian:10 container for better glibc compatibility across different Linux distributions.
 
 ```shell
+docker build -t libpg-query-builder .
 mvn clean package -Pdownload -PbuildLibDocker -PgenerateProtobuf  -DskipTests
 ```
 

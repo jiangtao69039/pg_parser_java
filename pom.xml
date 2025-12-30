@@ -111,12 +111,13 @@
             </build>
         </profile>
         <profile>
-            <!-- Build with Docker CentOS 7 for glibc compatibility -->
+            <!-- Build with Docker Debian 10 for glibc 2.28 compatibility -->
+            <!-- First build the image: docker build -t libpg-query-builder . -->
             <!-- Usage: mvn generate-sources -Pdownload -PbuildLibDocker -->
             <id>buildLibDocker</id>
             <properties>
                 <profileActive>buildLibDocker</profileActive>
-                <docker.image>centos:7</docker.image>
+                <docker.image>libpg-query-builder</docker.image>
             </properties>
             <activation>
                 <activeByDefault>false</activeByDefault>
@@ -146,7 +147,7 @@
                                         <argument>${docker.image}</argument>
                                         <argument>sh</argument>
                                         <argument>-c</argument>
-                                        <argument>sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; yum install -y gcc make which &amp;&amp; make clean &amp;&amp; CFLAGS="-std=gnu99" make build_shared &amp;&amp; chmod 644 libpg_query.so</argument>
+                                        <argument>make clean &amp;&amp; make build_shared &amp;&amp; chmod 644 libpg_query.so</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
