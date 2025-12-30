@@ -4,6 +4,7 @@ import com.github.ttttz.pgParser.parse.PgQueryParseResult;
 import com.github.ttttz.pgParser.parse.PgQueryProtobufParseResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitStmt;
+import com.sun.jna.Native;
 import com.sun.jna.ptr.PointerByReference;
 
 import java.util.ArrayList;
@@ -14,7 +15,7 @@ import java.util.List;
  */
 public class PgQueryWrapper {
 
-    private static final int POINTER_SIZE = 8; // 64-bit
+    private static final int POINTER_SIZE = Native.POINTER_SIZE;
 
     /**
      * Parse SQL and return JSON AST
