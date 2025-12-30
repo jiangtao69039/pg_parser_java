@@ -146,7 +146,7 @@
                                         <argument>${docker.image}</argument>
                                         <argument>sh</argument>
                                         <argument>-c</argument>
-                                        <argument>sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; yum install -y gcc make &amp;&amp; make clean &amp;&amp; make build_shared &amp;&amp; chmod 644 libpg_query.so</argument>
+                                        <argument>sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo &amp;&amp; yum install -y gcc make which &amp;&amp; make clean &amp;&amp; CFLAGS="-std=gnu99" make build_shared &amp;&amp; chmod 644 libpg_query.so</argument>
                                     </arguments>
                                 </configuration>
                             </execution>
