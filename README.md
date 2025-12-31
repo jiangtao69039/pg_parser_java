@@ -60,7 +60,32 @@ mvn test
 
 ## Usage: Split multiple sql statements
  See examples in docs/*.md
+```java
+@Test
+public void test_parse_protobuf() throws PgQueryException {
+    ParseResult result = PgQueryWrapper.pgQueryParseProtobuf("SELECT * FROM users WHERE id = 1");
 
+    // 获取语句数量
+    System.out.println("Statements count: " + result.getStmtsCount());
+
+    // 获取第一个语句
+    RawStmt rawStmt = result.getStmts(0);
+    Node stmtNode = rawStmt.getStmt();
+
+    // 检查是否为 SELECT 语句
+    if (stmtNode.hasSelectStmt()) {
+        SelectStmt selectStmt = stmtNode.getSelectStmt();
+
+        // 获取 FROM 子句中的表名
+        Node fromNode = selectStmt.getFromClause(0);
+        if (fromNode.hasRangeVar()) {
+            RangeVar rangeVar = fromNode.getRangeVar();
+            System.out.println("Table name: " + rangeVar.getRelname());
+            // 输出: Table name: users
+        }
+    }
+}
+```
 ## Authors
  - [jiangtao69039](https://github.com/jiangtao69039)
 
