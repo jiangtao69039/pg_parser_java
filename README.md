@@ -5,7 +5,7 @@ Java library for accessing the PostgreSQL parser outside of the server.
 This library uses the base library [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query)  
 
 ## Required tools before install
- * wget (or manual download of [libpg_query](https://github.com/jiangtao69039/libpg_query/archive/refs/tags/17-1229.zip) source code and unzip into target/downloads/ to avoid wget)
+ * wget (or manual download of [libpg_query-17-1229.zip](https://github.com/jiangtao69039/libpg_query/archive/refs/tags/17-1229.zip) source code and unzip into target/downloads/ to avoid wget)
  * maven
  * java 8+
 
