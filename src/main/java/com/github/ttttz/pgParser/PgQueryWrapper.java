@@ -1,9 +1,13 @@
 package com.github.ttttz.pgParser;
 
+import com.github.ttttz.pgParser.deparse.PgQueryDeparseResult;
+import com.github.ttttz.pgParser.deparse.PostgresDeparseOpts;
 import com.github.ttttz.pgParser.parse.PgQueryParseResult;
+import com.github.ttttz.pgParser.parse.PgQueryProtobuf;
 import com.github.ttttz.pgParser.parse.PgQueryProtobufParseResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitStmt;
+import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -90,5 +94,82 @@ public class PgQueryWrapper {
         } finally {
             PgQueryLibInterface.INSTANCE.pg_query_free_split_result(result);
         }
+    }
+
+    /**
+     * Deparse protobuf parse tree back to SQL string
+     *
+     * @param parseResult ParseResult from parseTree()
+     * @return SQL string
+     * @throws PgQueryException if deparsing fails
+     */
+    public static String deparse(pg_query.PgQuery.ParseResult parseResult) throws PgQueryException {
+        byte[] protobufBytes = parseResult.toByteArray();
+        PgQueryProtobuf.ByValue protobuf = createProtobuf(protobufBytes);
+
+        PgQueryDeparseResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_deparse_protobuf(protobuf);
+        try {
+            if (result.hasError()) {
+                throw new PgQueryException(result.error.message, result.error.cursorpos);
+            }
+            return result.query;
+        } finally {
+            PgQueryLibInterface.INSTANCE.pg_query_free_deparse_result(result);
+        }
+    }
+
+    /**
+     * Deparse protobuf parse tree back to SQL string with options
+     *
+     * @param parseResult ParseResult from parseTree()
+     * @param opts        Deparse options
+     * @return SQL string
+     * @throws PgQueryException if deparsing fails
+     */
+    public static String deparseWithOpts(pg_query.PgQuery.ParseResult parseResult, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
+        byte[] protobufBytes = parseResult.toByteArray();
+        PgQueryProtobuf.ByValue protobuf = createProtobuf(protobufBytes);
+
+        PgQueryDeparseResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_deparse_protobuf_opts(protobuf, opts);
+        try {
+            if (result.hasError()) {
+                throw new PgQueryException(result.error.message, result.error.cursorpos);
+            }
+            return result.query;
+        } finally {
+            PgQueryLibInterface.INSTANCE.pg_query_free_deparse_result(result);
+        }
+    }
+
+    /**
+     * Deparse protobuf bytes back to SQL string
+     *
+     * @param protobufBytes Protobuf bytes
+     * @return SQL string
+     * @throws PgQueryException if deparsing fails
+     */
+    public static String deparseFromBytes(byte[] protobufBytes) throws PgQueryException {
+        PgQueryProtobuf.ByValue protobuf = createProtobuf(protobufBytes);
+
+        PgQueryDeparseResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_deparse_protobuf(protobuf);
+        try {
+            if (result.hasError()) {
+                throw new PgQueryException(result.error.message, result.error.cursorpos);
+            }
+            return result.query;
+        } finally {
+            PgQueryLibInterface.INSTANCE.pg_query_free_deparse_result(result);
+        }
+    }
+
+    /**
+     * Helper method to create PgQueryProtobuf.ByValue from byte array
+     */
+    private static PgQueryProtobuf.ByValue createProtobuf(byte[] bytes) {
+        PgQueryProtobuf.ByValue protobuf = new PgQueryProtobuf.ByValue();
+        protobuf.len = bytes.length;
+        protobuf.data = new Memory(bytes.length);
+        protobuf.data.write(0, bytes, 0, bytes.length);
+        return protobuf;
     }
 }

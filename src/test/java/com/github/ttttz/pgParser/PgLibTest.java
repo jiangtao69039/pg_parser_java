@@ -1,5 +1,6 @@
 package com.github.ttttz.pgParser;
 
+import com.github.ttttz.pgParser.deparse.PostgresDeparseOpts;
 import com.github.ttttz.pgParser.parse.PgQueryParseResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitStmt;
@@ -201,5 +202,158 @@ public class PgLibTest {
             PgQueryWrapper.parseTree("SELECT * FROM");
         });
         System.out.println("Protobuf parse exception: " + exception.getMessage());
+    }
+
+    // ============== Deparse API tests ==============
+
+    @Test
+    public void test_deparse_simple() throws PgQueryException {
+        String sql = "SELECT 1";
+        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+
+        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        assertNotNull(deparsedSql);
+        assertEquals("SELECT 1", deparsedSql);
+        System.out.println("Deparsed SQL: " + deparsedSql);
+    }
+
+    @Test
+    public void test_deparse_select_from() throws PgQueryException {
+        String sql = "SELECT * FROM users WHERE id = 1";
+        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+
+        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        assertNotNull(deparsedSql);
+        assertTrue(deparsedSql.toLowerCase().contains("select"));
+        assertTrue(deparsedSql.toLowerCase().contains("users"));
+        System.out.println("Original SQL: " + sql);
+        System.out.println("Deparsed SQL: " + deparsedSql);
+    }
+
+    @Test
+    public void test_deparse_insert() throws PgQueryException {
+        String sql = "INSERT INTO orders (product, qty) VALUES ('apple', 10)";
+        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+
+        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        assertNotNull(deparsedSql);
+        assertTrue(deparsedSql.toLowerCase().contains("insert"));
+        assertTrue(deparsedSql.toLowerCase().contains("orders"));
+        System.out.println("Original SQL: " + sql);
+        System.out.println("Deparsed SQL: " + deparsedSql);
+    }
+
+    @Test
+    public void test_deparse_with_pretty_print() throws PgQueryException {
+        String sql = "SELECT a, b, c FROM users WHERE id = 1 AND name = 'test'";
+        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+
+        PostgresDeparseOpts.ByValue opts = PostgresDeparseOpts.builder()
+                .prettyPrint(true)
+                .indentSize(2)
+                .build();
+
+        String deparsedSql = PgQueryWrapper.deparseWithOpts(parseResult, opts);
+        assertNotNull(deparsedSql);
+        System.out.println("Pretty printed SQL:\n" + deparsedSql);
+    }
+
+    @Test
+    public void test_deparse_with_trailing_newline() throws PgQueryException {
+        String sql = "SELECT 1";
+        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+
+        PostgresDeparseOpts.ByValue opts = PostgresDeparseOpts.builder()
+                .trailingNewline(true)
+                .build();
+
+        String deparsedSql = PgQueryWrapper.deparseWithOpts(parseResult, opts);
+        assertNotNull(deparsedSql);
+        // Note: trailing_newline option behavior may vary by libpg_query version
+        System.out.println("SQL with trailing newline option: [" + deparsedSql + "]");
+    }
+
+    @Test
+    public void test_deparse_complex_query() throws PgQueryException {
+        String sql = "SELECT u.id, u.name, o.total FROM users u " +
+                "JOIN orders o ON u.id = o.user_id " +
+                "WHERE o.total > 100 ORDER BY o.total DESC LIMIT 10";
+        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+
+        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        assertNotNull(deparsedSql);
+        System.out.println("Original SQL: " + sql);
+        System.out.println("Deparsed SQL: " + deparsedSql);
+    }
+
+    @Test
+    public void test_deparse_roundtrip() throws PgQueryException {
+        String sql = "SELECT id, name FROM users WHERE active = true";
+
+        // Parse -> Deparse -> Parse again
+        ParseResult parseResult1 = PgQueryWrapper.parseTree(sql);
+        String deparsedSql = PgQueryWrapper.deparse(parseResult1);
+        ParseResult parseResult2 = PgQueryWrapper.parseTree(deparsedSql);
+
+        // Both parse results should have the same structure
+        assertEquals(parseResult1.getStmtsCount(), parseResult2.getStmtsCount());
+        System.out.println("Roundtrip successful!");
+        System.out.println("Original: " + sql);
+        System.out.println("Deparsed: " + deparsedSql);
+    }
+
+    @Test
+    public void test_deparse_create_as() throws PgQueryException {
+        /**
+         * version: 170007
+         * stmts {
+         *   stmt {
+         *     create_table_as_stmt {
+         *       query {
+         *         select_stmt {
+         *           target_list {
+         *             res_target {
+         *               val {
+         *                 column_ref {
+         *                   fields {
+         *                     a_star {
+         *                     }
+         *                   }
+         *                   location: 39
+         *                 }
+         *               }
+         *               location: 39
+         *             }
+         *           }
+         *           from_clause {
+         *             range_var {
+         *               relname: "t1"
+         *               inh: true
+         *               relpersistence: "p"
+         *               location: 46
+         *             }
+         *           }
+         *           limit_option: LIMIT_OPTION_DEFAULT
+         *           op: SETOP_NONE
+         *         }
+         *       }
+         *       into {
+         *         rel {
+         *           relname: "ct1"
+         *           inh: true
+         *           relpersistence: "p"
+         *           location: 25
+         *         }
+         *         on_commit: ONCOMMIT_NOOP
+         *       }
+         *       objtype: OBJECT_MATVIEW
+         *     }
+         *   }
+         * }
+         */
+        String sql = "create Materialized view CT1 AS select * from t1";
+        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+
+        // 我想从parseResult拿到select子句然后deparse出select语句
     }
 }

@@ -1,6 +1,9 @@
 package com.github.ttttz.pgParser;
 
+import com.github.ttttz.pgParser.deparse.PgQueryDeparseResult;
+import com.github.ttttz.pgParser.deparse.PostgresDeparseOpts;
 import com.github.ttttz.pgParser.parse.PgQueryParseResult;
+import com.github.ttttz.pgParser.parse.PgQueryProtobuf;
 import com.github.ttttz.pgParser.parse.PgQueryProtobufParseResult;
 import com.github.ttttz.pgParser.split.PgQuerySplitResult;
 import com.sun.jna.Library;
@@ -86,4 +89,22 @@ public interface PgQueryLibInterface extends Library {
     PgQueryProtobufParseResult.ByValue pg_query_parse_protobuf_opts(String input, int parser_options);
 
     void pg_query_free_protobuf_parse_result(PgQueryProtobufParseResult.ByValue result);
+
+    // ============== Deparse functions (Protobuf to SQL) ==============
+    /**
+     * Convert protobuf parse tree back to SQL string
+     * @param parse_tree Protobuf parse tree
+     * @return PgQueryDeparseResult with SQL query string
+     */
+    PgQueryDeparseResult.ByValue pg_query_deparse_protobuf(PgQueryProtobuf.ByValue parse_tree);
+
+    /**
+     * Convert protobuf parse tree back to SQL string with options
+     * @param parse_tree Protobuf parse tree
+     * @param opts Deparse options (pretty print, indentation, etc.)
+     * @return PgQueryDeparseResult with SQL query string
+     */
+    PgQueryDeparseResult.ByValue pg_query_deparse_protobuf_opts(PgQueryProtobuf.ByValue parse_tree, PostgresDeparseOpts.ByValue opts);
+
+    void pg_query_free_deparse_result(PgQueryDeparseResult.ByValue result);
 }
