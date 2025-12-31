@@ -5,17 +5,18 @@ Java library for accessing the PostgreSQL parser outside of the server.
 This library uses the base library [libpg_query](https://github.com/pganalyze/libpg_query#libpg_query)  
 
 ## Required tools before install
- * wget
+ * wget (or manual download of [libpg_query](https://github.com/jiangtao69039/libpg_query/archive/refs/tags/17-1229.zip) source code and unzip into target/downloads/ to avoid wget)
  * maven
  * java 8+
 
-**For local build (without Docker):**
- * make
- * gcc
- * protoc ( 3.21.12 for regenerating protobuf classes,sudo apt install protobuf-compiler, and protoc --version is same with protobuf-java in pom.xml)
-
 **For Docker build (recommended):**
  * docker
+
+**For local build (without Docker):**
+* make
+* gcc
+* protoc ( 3.21.12 for regenerating protobuf classes,sudo apt install protobuf-compiler, and protoc --version is same with protobuf-java in pom.xml)
+
 
 ## Installation
 
