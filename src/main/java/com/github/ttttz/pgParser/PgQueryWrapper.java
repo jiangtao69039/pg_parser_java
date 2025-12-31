@@ -28,7 +28,7 @@ public class PgQueryWrapper {
      * @return JSON string representing the parse tree
      * @throws PgQueryException if parsing fails
      */
-    public static String parse(String sql) throws PgQueryException {
+    public static String pgQueryParse(String sql) throws PgQueryException {
         PgQueryParseResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_parse(sql);
         try {
             if (result.hasError()) {
@@ -47,7 +47,7 @@ public class PgQueryWrapper {
      * @return ParseResult containing the AST as Java objects
      * @throws PgQueryException if parsing fails
      */
-    public static pg_query.PgQuery.ParseResult parseTree(String sql) throws PgQueryException {
+    public static pg_query.PgQuery.ParseResult pgQueryParseProtobuf(String sql) throws PgQueryException {
         PgQueryProtobufParseResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_parse_protobuf(sql);
         try {
             if (result.hasError()) {
@@ -71,7 +71,39 @@ public class PgQueryWrapper {
      * @return List of individual SQL statements
      * @throws PgQueryException if splitting fails
      */
-    public static List<String> split(String sql) throws PgQueryException {
+    public static List<String> pgQuerySplitWithScanner(String sql) throws PgQueryException {
+        PgQuerySplitResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_split_with_scanner(sql);
+        try {
+            if (result.error != null && result.error.message != null) {
+                throw new PgQueryException(result.error.message, result.error.cursorpos);
+            }
+
+            List<String> statements = new ArrayList<>();
+            PointerByReference stmts = result.stmts;
+
+            for (int i = 0; i < result.n_stmts; i++) {
+                PgQuerySplitStmt.ByReference stmt = new PgQuerySplitStmt.ByReference(
+                        stmts.getPointer().getPointer(i * POINTER_SIZE)
+                );
+                stmt.read();
+                String statement = sql.substring(stmt.stmt_location, stmt.stmt_location + stmt.stmt_len).trim();
+                statements.add(statement);
+            }
+
+            return statements;
+        } finally {
+            PgQueryLibInterface.INSTANCE.pg_query_free_split_result(result);
+        }
+    }
+
+    /**
+     * Split SQL into individual statements
+     *
+     * @param sql SQL containing multiple statements
+     * @return List of individual SQL statements
+     * @throws PgQueryException if splitting fails
+     */
+    public static List<String> pgQuerySplitWithParser(String sql) throws PgQueryException {
         PgQuerySplitResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_split_with_parser(sql);
         try {
             if (result.error != null && result.error.message != null) {
@@ -103,7 +135,7 @@ public class PgQueryWrapper {
      * @return SQL string
      * @throws PgQueryException if deparsing fails
      */
-    public static String deparse(pg_query.PgQuery.ParseResult parseResult) throws PgQueryException {
+    public static String pgQueryDeparseProtobuf(pg_query.PgQuery.ParseResult parseResult) throws PgQueryException {
         byte[] protobufBytes = parseResult.toByteArray();
         PgQueryProtobuf.ByValue protobuf = createProtobuf(protobufBytes);
 
@@ -126,7 +158,7 @@ public class PgQueryWrapper {
      * @return SQL string
      * @throws PgQueryException if deparsing fails
      */
-    public static String deparseWithOpts(pg_query.PgQuery.ParseResult parseResult, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
+    public static String pgQueryDeparseProtobufOpts(pg_query.PgQuery.ParseResult parseResult, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
         byte[] protobufBytes = parseResult.toByteArray();
         PgQueryProtobuf.ByValue protobuf = createProtobuf(protobufBytes);
 
@@ -148,7 +180,7 @@ public class PgQueryWrapper {
      * @return SQL string
      * @throws PgQueryException if deparsing fails
      */
-    public static String deparseFromBytes(byte[] protobufBytes) throws PgQueryException {
+    public static String pgQueryDeparseProtobufFromBytes(byte[] protobufBytes) throws PgQueryException {
         PgQueryProtobuf.ByValue protobuf = createProtobuf(protobufBytes);
 
         PgQueryDeparseResult.ByValue result = PgQueryLibInterface.INSTANCE.pg_query_deparse_protobuf(protobuf);
@@ -189,8 +221,8 @@ public class PgQueryWrapper {
      * @return SQL string
      * @throws PgQueryException if deparsing fails
      */
-    public static String deparseNode(pg_query.PgQuery.Node node) throws PgQueryException {
-        return deparseNode(node, DEFAULT_PG_VERSION);
+    public static String pgQueryDeparseProtobufFromNode(pg_query.PgQuery.Node node) throws PgQueryException {
+        return pgQueryDeparseProtobufFromNode(node, DEFAULT_PG_VERSION);
     }
 
     /**
@@ -201,14 +233,14 @@ public class PgQueryWrapper {
      * @return SQL string
      * @throws PgQueryException if deparsing fails
      */
-    public static String deparseNode(pg_query.PgQuery.Node node, int version) throws PgQueryException {
+    public static String pgQueryDeparseProtobufFromNode(pg_query.PgQuery.Node node, int version) throws PgQueryException {
         pg_query.PgQuery.ParseResult parseResult = pg_query.PgQuery.ParseResult.newBuilder()
                 .setVersion(version)
                 .addStmts(pg_query.PgQuery.RawStmt.newBuilder()
                         .setStmt(node)
                         .build())
                 .build();
-        return deparse(parseResult);
+        return pgQueryDeparseProtobuf(parseResult);
     }
 
     /**
@@ -219,8 +251,8 @@ public class PgQueryWrapper {
      * @return SQL string
      * @throws PgQueryException if deparsing fails
      */
-    public static String deparseNodeWithOpts(pg_query.PgQuery.Node node, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
-        return deparseNodeWithOpts(node, DEFAULT_PG_VERSION, opts);
+    public static String pgQueryDeparseProtobufOptsFromNode(pg_query.PgQuery.Node node, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
+        return pgQueryDeparseProtobufOptsFromNode(node, DEFAULT_PG_VERSION, opts);
     }
 
     /**
@@ -232,13 +264,13 @@ public class PgQueryWrapper {
      * @return SQL string
      * @throws PgQueryException if deparsing fails
      */
-    public static String deparseNodeWithOpts(pg_query.PgQuery.Node node, int version, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
+    public static String pgQueryDeparseProtobufOptsFromNode(pg_query.PgQuery.Node node, int version, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
         pg_query.PgQuery.ParseResult parseResult = pg_query.PgQuery.ParseResult.newBuilder()
                 .setVersion(version)
                 .addStmts(pg_query.PgQuery.RawStmt.newBuilder()
                         .setStmt(node)
                         .build())
                 .build();
-        return deparseWithOpts(parseResult, opts);
+        return pgQueryDeparseProtobufOpts(parseResult, opts);
     }
 }

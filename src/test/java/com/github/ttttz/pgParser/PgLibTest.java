@@ -2,9 +2,6 @@ package com.github.ttttz.pgParser;
 
 import com.github.ttttz.pgParser.deparse.PostgresDeparseOpts;
 import com.github.ttttz.pgParser.parse.PgQueryParseResult;
-import com.github.ttttz.pgParser.split.PgQuerySplitResult;
-import com.github.ttttz.pgParser.split.PgQuerySplitStmt;
-import com.sun.jna.ptr.PointerByReference;
 import org.junit.jupiter.api.Test;
 import pg_query.PgQuery.ParseResult;
 import pg_query.PgQuery.RawStmt;
@@ -18,25 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class PgLibTest {
 
-    @Test
-    public void test_split() {
-        String input = "select * from t;select * from t;";
-        PgQuerySplitResult.ByValue byValue = PgQueryLibInterface
-                .INSTANCE
-                .pg_query_split_with_parser(input);
-        PointerByReference stmts = byValue.stmts;
-        int pointIndex = 0;
-        int pointSize = 8; //bytes
-        for (int i = 0; i < byValue.n_stmts; i++) {
-            pointIndex = i * pointSize;
-            PgQuerySplitStmt.ByReference pgQuerySplitStmt = new PgQuerySplitStmt.ByReference(stmts.getPointer().getPointer(pointIndex));
-            pgQuerySplitStmt.read();
-            String split = input.substring(pgQuerySplitStmt.stmt_location, pgQuerySplitStmt.stmt_location + pgQuerySplitStmt.stmt_len);
-            assertEquals("select * from t", split);
-        }
-        PgQueryLibInterface
-                .INSTANCE.pg_query_free_split_result(byValue);
-    }
 
     @Test
     public void test_parse_simple() {
@@ -92,7 +70,7 @@ public class PgLibTest {
 
     @Test
     public void test_PgQuery_parse() throws PgQueryException {
-        String json = PgQueryWrapper.parse("SELECT * FROM users");
+        String json = PgQueryWrapper.pgQueryParse("SELECT * FROM users");
 
         assertNotNull(json);
         assertTrue(json.contains("SelectStmt"));
@@ -102,15 +80,23 @@ public class PgLibTest {
 
     @Test
     public void test_PgQuery_parse_error() {
-        PgQueryException exception = assertThrows(PgQueryException.class, () -> {
-            PgQueryWrapper.parse("SELECT * FROM");
-        });
+        PgQueryException exception = assertThrows(PgQueryException.class, () -> PgQueryWrapper.pgQueryParse("SELECT * FROM"));
         System.out.println("Exception: " + exception.getMessage());
     }
 
     @Test
-    public void test_PgQuery_split() throws PgQueryException {
-        List<String> statements = PgQueryWrapper.split("SELECT 1; SELECT 2; SELECT 3;");
+    public void test_PgQuery_split_parser() throws PgQueryException {
+        List<String> statements = PgQueryWrapper.pgQuerySplitWithParser("SELECT 1; SELECT 2; SELECT 3;");
+
+        assertEquals(3, statements.size());
+        assertEquals("SELECT 1", statements.get(0));
+        assertEquals("SELECT 2", statements.get(1));
+        assertEquals("SELECT 3", statements.get(2));
+    }
+
+    @Test
+    public void test_PgQuery_split_scanner() throws PgQueryException {
+        List<String> statements = PgQueryWrapper.pgQuerySplitWithScanner("SELECT 1; SELECT 2; SELECT 3;");
 
         assertEquals(3, statements.size());
         assertEquals("SELECT 1", statements.get(0));
@@ -121,8 +107,8 @@ public class PgLibTest {
     // ============== Protobuf API tests ==============
 
     @Test
-    public void test_parseTree_simple() throws PgQueryException {
-        ParseResult result = PgQueryWrapper.parseTree("SELECT 1");
+    public void test_pgQueryParseProtobuf_simple() throws PgQueryException {
+        ParseResult result = PgQueryWrapper.pgQueryParseProtobuf("SELECT 1");
 
         assertNotNull(result);
         assertEquals(1, result.getStmtsCount());
@@ -131,8 +117,8 @@ public class PgLibTest {
     }
 
     @Test
-    public void test_parseTree_select_from() throws PgQueryException {
-        ParseResult result = PgQueryWrapper.parseTree("SELECT * FROM users WHERE id = 1");
+    public void test_pgQueryParseProtobuf_select_from() throws PgQueryException {
+        ParseResult result = PgQueryWrapper.pgQueryParseProtobuf("SELECT * FROM users WHERE id = 1");
 
         assertEquals(1, result.getStmtsCount());
 
@@ -156,8 +142,8 @@ public class PgLibTest {
     }
 
     @Test
-    public void test_parseTree_insert() throws PgQueryException {
-        ParseResult result = PgQueryWrapper.parseTree(
+    public void test_pgQueryParseProtobuf_insert() throws PgQueryException {
+        ParseResult result = PgQueryWrapper.pgQueryParseProtobuf(
                 "INSERT INTO orders (product, qty) VALUES ('apple', 10)"
         );
 
@@ -180,8 +166,8 @@ public class PgLibTest {
     }
 
     @Test
-    public void test_parseTree_multiple_tables() throws PgQueryException {
-        ParseResult result = PgQueryWrapper.parseTree(
+    public void test_pgQueryParseProtobuf_multiple_tables() throws PgQueryException {
+        ParseResult result = PgQueryWrapper.pgQueryParseProtobuf(
                 "SELECT * FROM users u JOIN orders o ON u.id = o.user_id"
         );
 
@@ -197,10 +183,8 @@ public class PgLibTest {
     }
 
     @Test
-    public void test_parseTree_error() {
-        PgQueryException exception = assertThrows(PgQueryException.class, () -> {
-            PgQueryWrapper.parseTree("SELECT * FROM");
-        });
+    public void test_pgQueryParseProtobuf_error() {
+        PgQueryException exception = assertThrows(PgQueryException.class, () -> PgQueryWrapper.pgQueryParseProtobuf("SELECT * FROM"));
         System.out.println("Protobuf parse exception: " + exception.getMessage());
     }
 
@@ -209,9 +193,9 @@ public class PgLibTest {
     @Test
     public void test_deparse_simple() throws PgQueryException {
         String sql = "SELECT 1";
-        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+        ParseResult parseResult = PgQueryWrapper.pgQueryParseProtobuf(sql);
 
-        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        String deparsedSql = PgQueryWrapper.pgQueryDeparseProtobuf(parseResult);
         assertNotNull(deparsedSql);
         assertEquals("SELECT 1", deparsedSql);
         System.out.println("Deparsed SQL: " + deparsedSql);
@@ -220,9 +204,9 @@ public class PgLibTest {
     @Test
     public void test_deparse_select_from() throws PgQueryException {
         String sql = "SELECT * FROM users WHERE id = 1";
-        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+        ParseResult parseResult = PgQueryWrapper.pgQueryParseProtobuf(sql);
 
-        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        String deparsedSql = PgQueryWrapper.pgQueryDeparseProtobuf(parseResult);
         assertNotNull(deparsedSql);
         assertTrue(deparsedSql.toLowerCase().contains("select"));
         assertTrue(deparsedSql.toLowerCase().contains("users"));
@@ -233,9 +217,9 @@ public class PgLibTest {
     @Test
     public void test_deparse_insert() throws PgQueryException {
         String sql = "INSERT INTO orders (product, qty) VALUES ('apple', 10)";
-        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+        ParseResult parseResult = PgQueryWrapper.pgQueryParseProtobuf(sql);
 
-        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        String deparsedSql = PgQueryWrapper.pgQueryDeparseProtobuf(parseResult);
         assertNotNull(deparsedSql);
         assertTrue(deparsedSql.toLowerCase().contains("insert"));
         assertTrue(deparsedSql.toLowerCase().contains("orders"));
@@ -246,14 +230,14 @@ public class PgLibTest {
     @Test
     public void test_deparse_with_pretty_print() throws PgQueryException {
         String sql = "SELECT a, b, c FROM users WHERE id = 1 AND name = 'test'";
-        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+        ParseResult parseResult = PgQueryWrapper.pgQueryParseProtobuf(sql);
 
         PostgresDeparseOpts.ByValue opts = PostgresDeparseOpts.builder()
                 .prettyPrint(true)
                 .indentSize(2)
                 .build();
 
-        String deparsedSql = PgQueryWrapper.deparseWithOpts(parseResult, opts);
+        String deparsedSql = PgQueryWrapper.pgQueryDeparseProtobufOpts(parseResult, opts);
         assertNotNull(deparsedSql);
         System.out.println("Pretty printed SQL:\n" + deparsedSql);
     }
@@ -261,13 +245,13 @@ public class PgLibTest {
     @Test
     public void test_deparse_with_trailing_newline() throws PgQueryException {
         String sql = "SELECT 1";
-        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+        ParseResult parseResult = PgQueryWrapper.pgQueryParseProtobuf(sql);
 
         PostgresDeparseOpts.ByValue opts = PostgresDeparseOpts.builder()
                 .trailingNewline(true)
                 .build();
 
-        String deparsedSql = PgQueryWrapper.deparseWithOpts(parseResult, opts);
+        String deparsedSql = PgQueryWrapper.pgQueryDeparseProtobufOpts(parseResult, opts);
         assertNotNull(deparsedSql);
         // Note: trailing_newline option behavior may vary by libpg_query version
         System.out.println("SQL with trailing newline option: [" + deparsedSql + "]");
@@ -278,9 +262,9 @@ public class PgLibTest {
         String sql = "SELECT u.id, u.name, o.total FROM users u " +
                 "JOIN orders o ON u.id = o.user_id " +
                 "WHERE o.total > 100 ORDER BY o.total DESC LIMIT 10";
-        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+        ParseResult parseResult = PgQueryWrapper.pgQueryParseProtobuf(sql);
 
-        String deparsedSql = PgQueryWrapper.deparse(parseResult);
+        String deparsedSql = PgQueryWrapper.pgQueryDeparseProtobuf(parseResult);
         assertNotNull(deparsedSql);
         System.out.println("Original SQL: " + sql);
         System.out.println("Deparsed SQL: " + deparsedSql);
@@ -291,9 +275,9 @@ public class PgLibTest {
         String sql = "SELECT id, name FROM users WHERE active = true";
 
         // Parse -> Deparse -> Parse again
-        ParseResult parseResult1 = PgQueryWrapper.parseTree(sql);
-        String deparsedSql = PgQueryWrapper.deparse(parseResult1);
-        ParseResult parseResult2 = PgQueryWrapper.parseTree(deparsedSql);
+        ParseResult parseResult1 = PgQueryWrapper.pgQueryParseProtobuf(sql);
+        String deparsedSql = PgQueryWrapper.pgQueryDeparseProtobuf(parseResult1);
+        ParseResult parseResult2 = PgQueryWrapper.pgQueryParseProtobuf(deparsedSql);
 
         // Both parse results should have the same structure
         assertEquals(parseResult1.getStmtsCount(), parseResult2.getStmtsCount());
@@ -306,7 +290,7 @@ public class PgLibTest {
     public void test_deparse_create_as() throws PgQueryException {
 
         String sql = "create Materialized view CT1 AS select * from t1";
-        ParseResult parseResult = PgQueryWrapper.parseTree(sql);
+        ParseResult parseResult = PgQueryWrapper.pgQueryParseProtobuf(sql);
 
         // 从 parseResult 获取 CreateTableAsStmt
         RawStmt rawStmt = parseResult.getStmts(0);
@@ -319,7 +303,7 @@ public class PgLibTest {
         assertTrue(queryNode.hasSelectStmt(), "Query should be SelectStmt");
 
         // 使用 deparseNode 直接从 Node deparse 出 SQL
-        String selectSql = PgQueryWrapper.deparseNode(queryNode);
+        String selectSql = PgQueryWrapper.pgQueryDeparseProtobufFromNode(queryNode);
         assertNotNull(selectSql);
         System.out.println("Original SQL: " + sql);
         System.out.println("Extracted SELECT SQL: " + selectSql);
