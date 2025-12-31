@@ -172,4 +172,73 @@ public class PgQueryWrapper {
         protobuf.data.write(0, bytes, 0, bytes.length);
         return protobuf;
     }
+
+    /**
+     * Default PostgreSQL version for deparse operations
+     */
+    private static final int DEFAULT_PG_VERSION = 170007;
+
+    /**
+     * Deparse a single Node back to SQL string
+     * <p>
+     * This is useful for extracting and deparsing sub-statements, such as
+     * the SELECT clause from a CREATE VIEW or CREATE MATERIALIZED VIEW statement.
+     * </p>
+     *
+     * @param node The AST node to deparse (e.g., a SelectStmt node)
+     * @return SQL string
+     * @throws PgQueryException if deparsing fails
+     */
+    public static String deparseNode(pg_query.PgQuery.Node node) throws PgQueryException {
+        return deparseNode(node, DEFAULT_PG_VERSION);
+    }
+
+    /**
+     * Deparse a single Node back to SQL string with specified PostgreSQL version
+     *
+     * @param node    The AST node to deparse
+     * @param version PostgreSQL version number (e.g., 170007 for PG 17)
+     * @return SQL string
+     * @throws PgQueryException if deparsing fails
+     */
+    public static String deparseNode(pg_query.PgQuery.Node node, int version) throws PgQueryException {
+        pg_query.PgQuery.ParseResult parseResult = pg_query.PgQuery.ParseResult.newBuilder()
+                .setVersion(version)
+                .addStmts(pg_query.PgQuery.RawStmt.newBuilder()
+                        .setStmt(node)
+                        .build())
+                .build();
+        return deparse(parseResult);
+    }
+
+    /**
+     * Deparse a single Node back to SQL string with options
+     *
+     * @param node The AST node to deparse
+     * @param opts Deparse options (pretty print, indentation, etc.)
+     * @return SQL string
+     * @throws PgQueryException if deparsing fails
+     */
+    public static String deparseNodeWithOpts(pg_query.PgQuery.Node node, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
+        return deparseNodeWithOpts(node, DEFAULT_PG_VERSION, opts);
+    }
+
+    /**
+     * Deparse a single Node back to SQL string with version and options
+     *
+     * @param node    The AST node to deparse
+     * @param version PostgreSQL version number
+     * @param opts    Deparse options
+     * @return SQL string
+     * @throws PgQueryException if deparsing fails
+     */
+    public static String deparseNodeWithOpts(pg_query.PgQuery.Node node, int version, PostgresDeparseOpts.ByValue opts) throws PgQueryException {
+        pg_query.PgQuery.ParseResult parseResult = pg_query.PgQuery.ParseResult.newBuilder()
+                .setVersion(version)
+                .addStmts(pg_query.PgQuery.RawStmt.newBuilder()
+                        .setStmt(node)
+                        .build())
+                .build();
+        return deparseWithOpts(parseResult, opts);
+    }
 }

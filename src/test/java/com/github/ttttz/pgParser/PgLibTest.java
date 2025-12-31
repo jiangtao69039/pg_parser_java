@@ -304,56 +304,28 @@ public class PgLibTest {
 
     @Test
     public void test_deparse_create_as() throws PgQueryException {
-        /**
-         * version: 170007
-         * stmts {
-         *   stmt {
-         *     create_table_as_stmt {
-         *       query {
-         *         select_stmt {
-         *           target_list {
-         *             res_target {
-         *               val {
-         *                 column_ref {
-         *                   fields {
-         *                     a_star {
-         *                     }
-         *                   }
-         *                   location: 39
-         *                 }
-         *               }
-         *               location: 39
-         *             }
-         *           }
-         *           from_clause {
-         *             range_var {
-         *               relname: "t1"
-         *               inh: true
-         *               relpersistence: "p"
-         *               location: 46
-         *             }
-         *           }
-         *           limit_option: LIMIT_OPTION_DEFAULT
-         *           op: SETOP_NONE
-         *         }
-         *       }
-         *       into {
-         *         rel {
-         *           relname: "ct1"
-         *           inh: true
-         *           relpersistence: "p"
-         *           location: 25
-         *         }
-         *         on_commit: ONCOMMIT_NOOP
-         *       }
-         *       objtype: OBJECT_MATVIEW
-         *     }
-         *   }
-         * }
-         */
+
         String sql = "create Materialized view CT1 AS select * from t1";
         ParseResult parseResult = PgQueryWrapper.parseTree(sql);
 
-        // 我想从parseResult拿到select子句然后deparse出select语句
+        // 从 parseResult 获取 CreateTableAsStmt
+        RawStmt rawStmt = parseResult.getStmts(0);
+        Node stmtNode = rawStmt.getStmt();
+        assertTrue(stmtNode.hasCreateTableAsStmt(), "Should be CreateTableAsStmt");
+
+        // 获取 query (SELECT 子句)
+        pg_query.PgQuery.CreateTableAsStmt createTableAsStmt = stmtNode.getCreateTableAsStmt();
+        Node queryNode = createTableAsStmt.getQuery();
+        assertTrue(queryNode.hasSelectStmt(), "Query should be SelectStmt");
+
+        // 使用 deparseNode 直接从 Node deparse 出 SQL
+        String selectSql = PgQueryWrapper.deparseNode(queryNode);
+        assertNotNull(selectSql);
+        System.out.println("Original SQL: " + sql);
+        System.out.println("Extracted SELECT SQL: " + selectSql);
+
+        // 验证 deparse 出的是 SELECT 语句
+        assertTrue(selectSql.toUpperCase().startsWith("SELECT"), "Should start with SELECT");
+        assertTrue(selectSql.toLowerCase().contains("t1"), "Should contain table name t1");
     }
 }
