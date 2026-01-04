@@ -59,7 +59,7 @@ mvn clean package -Pdownload -PbuildLibDocker -DskipTests
 mvn test 
 ```
 
-## Usage: Split multiple sql statements
+## Usage: parse SQL
  See examples in docs/*.md
 ```java
 @Test
